@@ -57,10 +57,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="w-50 vh-100 bg-success p-0 m-0" id="map-container">
+                <div class="w-50 vh-100 bg-success p-0 m-0 position-relative" id="map-container">
                     <div id="map" class="w-100 vh-100 m-0 p-0">
     
                     </div>
+
+                    <img src="assets/img/compass.png" alt="" class="position-absolute top-0 start-0" id="compass" style="max-width: 100px; z-index: 1001;"></img>
                 </div>
             </div>
         </div>
@@ -237,14 +239,43 @@
 
                 var parts = gps[i].split(';');
 
+                
+
                 if(parts.length === 3){
                     var latt = strip_non_decimal(parts[0]);
                     var lng = strip_non_decimal(parts[1]);
                     var time = strip_non_time(parts[2]);
                     // console.log(latt + ', ' + lng + ', ' + time);
 
+                    
+                    var bearing = 0;
+
+                    if(i >= 0 && i < gps.length - 1){
+
+                        var nextLine = gps[i + 1];
+                        var nextParts = nextLine.split(';');
+
+                        if(nextParts.length === 3){
+
+                            var nextlatt = strip_non_decimal(nextParts[0]);
+                            var nextlng = strip_non_decimal(nextParts[1]);
+                            var nexttime = strip_non_time(nextParts[2]);
+
+                            var point1 = turf.point([parseFloat(lng), parseFloat(latt)]);
+                            var point2 = turf.point([parseFloat(nextlng), parseFloat(nextlatt)]);
+
+                            bearing = turf.bearing(point1, point2);
+                        }
+
+                        
+                    }
+                    
+
                     coordinates.push([parseFloat(latt), parseFloat(lng)]);
-                    video_time[time] = [parseFloat(latt), parseFloat(lng)];
+                    video_time[time] = {
+                            latLng : [parseFloat(latt), parseFloat(lng)],
+                            bearing: bearing
+                        };
                 };
 
                 
@@ -260,7 +291,7 @@
                 video_path.addTo(map);
                 map.fitBounds(video_path.getBounds());
 
-                video_pos = L.marker(coordinates[0]).addTo(map);
+                video_pos = L.marker(coordinates[0], {icon : icon}).addTo(map);
             }
         }
 
@@ -281,8 +312,11 @@
             // console.log(map.getZoom());
             var current_video_pos = video_time[current_time];
             if(current_video_pos !== undefined){
-                video_pos.setLatLng(current_video_pos);
-                map.setView(current_video_pos, map.getZoom());
+                video_pos.setLatLng(current_video_pos.latLng);
+                map.setView(current_video_pos.latLng, map.getZoom());
+                console.log(current_video_pos.bearing);
+                $('#logo').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
+                $('#compass').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
             }
         });
 
@@ -347,6 +381,15 @@
         while (num.length < size) num = "0" + num;
         return num;
     }
+
+
+    var icon = L.divIcon({
+                        html : '<img src="assets/img/navigation.png" style="width: 24px; height: 24px; object-fit: contain;" id="logo"></img>',
+                        iconSize : [24, 24],
+                        // iconAnchor : [12, 24],
+                        // popupAnchor : [0, -raw_icon.height * 0.9],
+                        className : 'map-marker'
+                    });
 </script>
     
 </body>
