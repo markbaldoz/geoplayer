@@ -52,7 +52,7 @@
                     
                     <video id="geoplayer" class="position-absolute start-0 top-0 vh-100 w-100" controls></video>
                     <div class="row m-0 position-absolute start-0 top-0 w-100" style="z-index: 1000;">
-                        <div class="px-3 py-2 border border-white text-white w-auto small m-1" style="cursor: pointer;" id="btn-load">
+                        <div class="px-2 py-1 border border-white bg-success text-white w-auto small m-1" style="cursor: pointer;" id="btn-load">
                             <i class="bi bi-cloud-arrow-up-fill me-1"></i>Upload GeoVideo
                         </div>
                     </div>
@@ -61,8 +61,11 @@
                     <div id="map" class="w-100 vh-100 m-0 p-0">
     
                     </div>
-
-                    <img src="assets/img/compass.png" alt="" class="position-absolute top-0 start-0" id="compass" style="max-width: 100px; z-index: 1001;"></img>
+                    <div class="position-absolute top-0 start-0 m-2 bg-white" style="z-index: 1001; border-radius: 50%;">
+                        
+                        <img src="assets/img/compass.png" alt=""  id="compass" 
+                            style="height: 70px; width: 70px; object-fit: contain; "></img>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,6 +236,14 @@
         reader.onload = function(){
             
             var gps = reader.result.split('\n');
+            var lastItem = gps[gps.length - 1];
+            
+            while(lastItem === "" && gps.length > 0){
+                gps.pop();
+                // console.log(gps.length);
+                lastItem = gps[gps.length - 1];
+            }
+
             var coordinates = [];
                 video_time = {};
             for(i = 0; i < gps.length; i++){
@@ -258,7 +269,7 @@
                         if(nextParts.length === 3){
 
                             var nextlatt = strip_non_decimal(nextParts[0]);
-                            var nextlng = strip_non_decimal(nextParts[1]);
+                            var nextlng  = strip_non_decimal(nextParts[1]);
                             var nexttime = strip_non_time(nextParts[2]);
 
                             var point1 = turf.point([parseFloat(lng), parseFloat(latt)]);
@@ -276,6 +287,8 @@
                             latLng : [parseFloat(latt), parseFloat(lng)],
                             bearing: bearing
                         };
+
+                    if(i === 0) $('#logo').css({'transform' : 'rotate('+ bearing +'deg)'});
                 };
 
                 
@@ -292,6 +305,7 @@
                 map.fitBounds(video_path.getBounds());
 
                 video_pos = L.marker(coordinates[0], {icon : icon}).addTo(map);
+                $('#geoplayer').trigger('play');
             }
         }
 
@@ -313,8 +327,8 @@
             var current_video_pos = video_time[current_time];
             if(current_video_pos !== undefined){
                 video_pos.setLatLng(current_video_pos.latLng);
-                map.setView(current_video_pos.latLng, map.getZoom());
-                console.log(current_video_pos.bearing);
+                // map.setView(current_video_pos.latLng, map.getZoom());
+                // console.log(current_video_pos.bearing);
                 $('#logo').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
                 $('#compass').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
             }
@@ -339,6 +353,9 @@
 
 
         $(document).on('click', '#btn-load', function(e){
+            $('#videoFile').val('');
+            $('#gpsFile').val('');
+
             $('#media-load-modal').modal('show');
         });
         $(document).on('click', '#btn-load-video', function(e){
