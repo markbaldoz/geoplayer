@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geovideo Player</title>
+
+
+    <!-- Bootstrap 5.2 -->
+    <link  href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<script src="assets/bootstrap/js/bootstrap.bundle.min.js" ></script>
+	
+
+    <!-- Fontawesome 6.2.1 -->
+    <link rel="stylesheet" href="assets/fontawesome/css/all.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="assets/bootstrap-icons/bootstrap-icons.css">
+
+
+    <!-- Map -->
+    <link rel="stylesheet" href="assets/js/map/leaflet/leaflet.css">
+    <script src="assets/js/map/leaflet/leaflet.js"></script>
+    <script src="assets/js/map/L.KML.js"></script>
+    <script src="assets/js/map/leaflet-omnivore.min.js"></script>
+    <script src="assets/js/map/leaflet.shpfile.js"></script>
+    <script src="assets/js/map/shp.js"></script>
+    <script src="assets/js/map/GeometryUtil.js"></script>
+    <script src="assets/js/map/leaflet.geometryutil.js"></script>
+    <script src="assets/js/map/turf.min.js"></script>
+    <link rel="stylesheet" href='https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css'>
+    <link rel="stylesheet" href='https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css'>
+    <script src='https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js'></script>
+
+    <!-- JQuery --> 
+    <link rel="stylesheet" href="assets/js/jquery-ui/jquery-ui.css">
+    <script src="assets/js/jquery-3.6.3.min.js"></script>
+    <script src="assets/js/jquery-ui/jquery-ui.js"></script>
+	
+    
+    <!-- Exif -->
+    <script src="assets/js/exif.js"></script>
+</head>
+<body>
+
+    <div class="container-fluid p-0 m-0">
+        <div class="w-100 vh-100 bg-danger m-0 p-0">
+            <div class="d-flex flex-row p-0 m-0 vh-100">
+                <div class="w-50 vh-100 bg-dark mb-0 position-relative">
+                    
+                    
+                    <video id="geoplayer" class="position-absolute start-0 top-0 vh-100 w-100" controls></video>
+                    <div class="row m-0 position-absolute start-0 top-0 w-100" style="z-index: 1000;">
+                        <div class="px-3 py-2 border border-white text-white w-auto small m-1" style="cursor: pointer;" id="btn-load">
+                            <i class="bi bi-cloud-arrow-up-fill me-1"></i>Upload GeoVideo
+                        </div>
+                    </div>
+                </div>
+                <div class="w-50 vh-100 bg-success p-0 m-0" id="map-container">
+                    <div id="map" class="w-100 vh-100 m-0 p-0">
+    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="modal fade" id="media-load-modal" data-bs-backdrop="static" data-bs-keyboard="false" 
+    tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="staticBackdropLabel">Load GeoVideo</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+                <table class="table small">
+                    <tbody>
+                        <tr class="align-top">
+                            <td class="border-0">
+                                <p class="small mb-0">Video File</p>
+                                <input type="file" name="" id="videoFile" class="border rounded p-1 w-100" accept="video/mp4" maxlength="10000000">
+                            </td>
+                        </tr>
+                        <tr class="align-top">
+                            <td class="border-0">
+                                <p class="small mb-0">GPS Information</p>
+                                <input type="file" name="" id="gpsFile" class="border rounded p-1 w-100" accept=".gps.info" maxlength="10000000">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btn-load-video">Play Video</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    <script src="assets/js/global.js"></script>
+
+    
+<script>
+    var video_path;
+    var video_pos;
+    var video_time = {};
+
+    $(window).ready(function(){
+        init_map();
+        // load_gps_info();
+        init_video_events();
+        
+        
+    });
+
+
+    function init_map(){
+        
+        map = L.map('map', {
+
+                attributionControl : false, 
+                zoomControl : false
+
+            });
+
+        
+        
+        var ph_bounds = new L.featureGroup([
+            L.marker([20.8496, 115.18222]),
+            L.marker([20.89066, 128.60751]),
+            L.marker([4.62135, 128.62948]),
+            L.marker([4.77464, 115.53378])
+        ]);
+
+        // FOCUS PH BOUNDS
+        map.fitBounds(ph_bounds.getBounds());
+
+
+        // LOAD BASEMAP
+        var base_map = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18,
+            minZoom: 5
+        });
+        base_map.addTo(map);
+
+
+        // Map layers
+        // var layerControl = L.control.layers(null,null,{collapsed : false})
+        //                     .addTo(map);
+        //     layerControl.addOverlay( images_layer, '<span class="">'+
+        //                                                             '<i class="bi bi-circle-fill text-success mx-1"></i>'+
+        //                                                             '<span class="lh-1 m-0">Geotagged Photos</span></span>');
+       
+
+
+    
+    
+    }
+
+    async function load_gps_info(){
+        var url = base_url + 'assets/files/videos/PRDP_GEOVIDEO_07232020_111426 AM-720p.gps.info';
+
+        var fetchResult;
+        var gpsData;
+        // var gps_info = fetch(url)
+        //                 .then((response) => response.text())
+        //                 .then((result) => fetchResult = result)
+        //                 .then((data) => gpsData = data);
+        // console.log(fetchResult + '\n' + gpsData);
+
+        var response = await fetch(url)
+                        .then(res => {
+                           if(res.ok === true){
+                               return res.text();
+                           }else{
+                               return 'fetch-error';
+                           }
+                        } )
+                        .then(data => {gpsData = data});
+
+        
+        if(gpsData !== 'fetch-error'){
+
+            var gps = gpsData.split('\n');
+            var coordinates = [];
+                video_time = {};
+            for(i = 0; i < gps.length; i++){
+
+                var parts = gps[i].split(';');
+
+                if(parts.length === 3){
+                    var latt = strip_non_decimal(parts[0]);
+                    var lng = strip_non_decimal(parts[1]);
+                    var time = strip_non_time(parts[2]);
+                    // console.log(latt + ', ' + lng + ', ' + time);
+
+                    coordinates.push([parseFloat(latt), parseFloat(lng)]);
+                    video_time[time] = [parseFloat(latt), parseFloat(lng)];
+                };
+
+                
+            }
+
+            if(coordinates.length > 0){
+
+                if(video_path !== undefined){
+                    map.removeLayer(videoPath);
+                }
+                video_path = L.polyline(coordinates, {weight: 5, color: '#00ff00'});
+                video_path.addTo(map);
+                map.fitBounds(video_path.getBounds());
+
+                video_pos = L.marker(coordinates[0]).addTo(map);
+            }
+        }else{
+            console.log(gpsData);
+        }
+
+        return;
+
+    }
+
+    function load_gps_from_file(file){
+        var reader = new FileReader();
+
+        reader.onload = function(){
+            
+            var gps = reader.result.split('\n');
+            var coordinates = [];
+                video_time = {};
+            for(i = 0; i < gps.length; i++){
+
+                var parts = gps[i].split(';');
+
+                if(parts.length === 3){
+                    var latt = strip_non_decimal(parts[0]);
+                    var lng = strip_non_decimal(parts[1]);
+                    var time = strip_non_time(parts[2]);
+                    // console.log(latt + ', ' + lng + ', ' + time);
+
+                    coordinates.push([parseFloat(latt), parseFloat(lng)]);
+                    video_time[time] = [parseFloat(latt), parseFloat(lng)];
+                };
+
+                
+            }
+
+            if(coordinates.length > 0){
+
+                if(video_path !== undefined){
+                    map.removeLayer(video_path);
+                    map.removeLayer(video_pos);
+                }
+                video_path = L.polyline(coordinates, {weight: 5, color: '#00ff00'});
+                video_path.addTo(map);
+                map.fitBounds(video_path.getBounds());
+
+                video_pos = L.marker(coordinates[0]).addTo(map);
+            }
+        }
+
+        reader.readAsText(file);
+    }
+
+    /*
+    |---------------------------------------------------------------
+    |   VIDEO EVENTS
+    |---------------------------------------------------------------
+    */
+
+    function init_video_events(){
+        var player = $('#geoplayer');
+        // player.controls = false;
+        player.on('timeupdate', function(){
+            current_time = sec_to_time(this.currentTime);
+            // console.log(map.getZoom());
+            var current_video_pos = video_time[current_time];
+            if(current_video_pos !== undefined){
+                video_pos.setLatLng(current_video_pos);
+                map.setView(current_video_pos, map.getZoom());
+            }
+        });
+
+
+        // $(document).on('change', '#videoFile', function(e){
+        //     var files = e.target.files;
+        //     if(files.length > 0){
+        //         player.attr('src', URL.createObjectURL(files[0]));
+        //     }
+
+        //     console.log('done');
+        // });
+
+        // $(document).on('change', '#gpsFile', function(e){
+        //     var files = e.target.files;
+        //     if(files.length > 0){
+        //         load_gps_from_file(files[0]);
+        //     }
+        // });
+
+
+        $(document).on('click', '#btn-load', function(e){
+            $('#media-load-modal').modal('show');
+        });
+        $(document).on('click', '#btn-load-video', function(e){
+            var videoFiles = $('#videoFile').prop('files');
+            console.log(videoFiles);
+            if(videoFiles.length <= 0){
+                alert('No Video File chosen');
+                return;
+            }
+
+            player.attr('src', URL.createObjectURL(videoFiles[0]));
+
+            // return;
+
+            var infoFiles = $('#gpsFile').prop('files');
+            if(infoFiles.length <= 0){
+                alert('No GPS Information File chosen');
+                return;
+            }
+
+            load_gps_from_file(infoFiles[0]);
+
+
+            $('#media-load-modal').modal('hide');
+        });
+    }
+
+    function sec_to_time(totalSeconds = 0){
+        var hours = Math.floor(totalSeconds / 3600);
+            totalSeconds %= 3600;
+        var minutes = Math.floor(totalSeconds / 60);
+        var seconds = Math.floor(totalSeconds) % 60;
+
+        return time = (hours > 0 ? pad(hours, 2) + ":" : "") + pad(minutes, 2) + ":" + pad(seconds, 2);
+
+    }
+
+    function pad(num, size) {
+        num = num.toString();
+        while (num.length < size) num = "0" + num;
+        return num;
+    }
+</script>
+    
+</body>
+</html>
