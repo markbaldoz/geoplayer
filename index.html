@@ -66,6 +66,13 @@
                         <img src="assets/img/compass.png" alt=""  id="compass" 
                             style="height: 70px; width: 70px; object-fit: contain; "></img>
                     </div>
+
+                    <div class="position-absolute bottom-0 end-0 small bg-white px-2 py-1 rounded m-1 small" style="z-index: 1001;">
+                        <input class="form-check-input" type="checkbox" value="" id="chk-follow" checked>
+                        <label class="form-check-label" for="flexCheckChecked">
+                          Track Position
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -111,9 +118,7 @@
 
     
 <script>
-    var video_path;
-    var video_pos;
-    var video_time = {};
+    
 
     $(window).ready(function(){
         init_map();
@@ -244,8 +249,10 @@
                 lastItem = gps[gps.length - 1];
             }
 
-            var coordinates = [];
+                coordinates = [];
+            var coordinates_inverse = [];
                 video_time = {};
+            var timeIndex = 0;
             for(i = 0; i < gps.length; i++){
 
                 var parts = gps[i].split(';');
@@ -283,10 +290,15 @@
                     
 
                     coordinates.push([parseFloat(latt), parseFloat(lng)]);
+                    coordinates_inverse.push([parseFloat(lng), parseFloat(latt)]);
+
                     video_time[time] = {
                             latLng : [parseFloat(latt), parseFloat(lng)],
-                            bearing: bearing
+                            bearing: bearing,
+                            timeIndex : timeIndex
                         };
+                    
+                        timeIndex++;
 
                     if(i === 0) $('#logo').css({'transform' : 'rotate('+ bearing +'deg)'});
                 };
@@ -298,10 +310,20 @@
 
                 if(video_path !== undefined){
                     map.removeLayer(video_path);
+                    map.removeLayer(current_video_pos_path);
                     map.removeLayer(video_pos);
                 }
                 video_path = L.polyline(coordinates, {weight: 5, color: '#00ff00'});
+                current_video_pos_path = L.polyline([], {weight: 5, color: '#ff0000'});
+                // console.log(video_path.getLatLngs());
+
+                video_line        = turf.lineString(coordinates_inverse);
+                video_path_length = turf.length(video_line);
+                    // console.log(video_path_length);
+                
+
                 video_path.addTo(map);
+                // current_video_pos_path.addTo(map);
                 map.fitBounds(video_path.getBounds());
 
                 video_pos = L.marker(coordinates[0], {icon : icon}).addTo(map);
@@ -317,21 +339,76 @@
     |   VIDEO EVENTS
     |---------------------------------------------------------------
     */
-
+    var video_path;
+    var video_path_length = 0;
+    var video_pos;
+    var video_time = {};
+    var video_duration = 0;
+    var vide_line;
+    var coordinates = [];
+    var current_video_pos_path;
     function init_video_events(){
         var player = $('#geoplayer');
+
+        
         // player.controls = false;
         player.on('timeupdate', function(){
             current_time = sec_to_time(this.currentTime);
+
+            var current_video_pos_percentage = (this.currentTime / this.duration);
+
+            // var along = turf.along(video_line, video_path_length * current_video_pos_percentage);
+            // if(along !== undefined){
+            //     video_pos.setLatLng(along.geometry.coordinates.reverse());
+            // }
+            // console.log(along);
+
+            // console.log(this.duration);
             // console.log(map.getZoom());
             var current_video_pos = video_time[current_time];
             if(current_video_pos !== undefined){
                 video_pos.setLatLng(current_video_pos.latLng);
-                // map.setView(current_video_pos.latLng, map.getZoom());
+                current_video_pos_path.addLatLng(current_video_pos.latLng);
+                
+                if($('#chk-follow').is(':checked')){
+                    map.setView(current_video_pos.latLng, map.getZoom());
+                }
                 // console.log(current_video_pos.bearing);
                 $('#logo').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
                 $('#compass').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
             }
+        });
+
+        player.on('seeking', function(){
+            $('#geoplayer').trigger('pause');
+            current_video_pos_path.setLatLngs([]);
+        });
+
+       
+        player.on('seeked', function(){
+
+            // console.log(player.playing());
+            var position = Math.floor(this.currentTime);
+            var new_time = sec_to_time(position);
+            var time_item = video_time[new_time];
+
+            while(time_item === undefined && position >= 0){
+                position--;
+                new_time = sec_to_time(position);
+                time_item = video_time[new_time];
+            }
+
+            if(time_item !== undefined){
+                // console.log('Nearest Index is : ' + time_item.timeIndex);
+                current_video_pos_path.setLatLngs(coordinates.slice(0, time_item.timeIndex));
+                video_pos.setLatLng(time_item.latLng);
+                $('#logo').css({'transform' : 'rotate('+ time_item.bearing +'deg)'});
+                $('#compass').css({'transform' : 'rotate('+ time_item.bearing +'deg)'});
+            }
+
+
+
+            $('#geoplayer').trigger('play');
         });
 
 
