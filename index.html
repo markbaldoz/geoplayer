@@ -37,10 +37,22 @@
     <link rel="stylesheet" href="assets/js/jquery-ui/jquery-ui.css">
     <script src="assets/js/jquery-3.6.3.min.js"></script>
     <script src="assets/js/jquery-ui/jquery-ui.js"></script>
+
+    <!-- font -->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 	
     
     <!-- Exif -->
     <script src="assets/js/exif.js"></script>
+
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+        }
+    </style>
+
 </head>
 <body>
 
@@ -52,9 +64,9 @@
                     
                     <video id="geoplayer" class="position-absolute start-0 top-0 vh-100 w-100" controls></video>
                     <div class="row m-0 position-absolute start-0 top-0 w-100" style="z-index: 1000;">
-                        <div class="px-2 py-2 border border-white bg-success text-white w-auto m-1 rounded" 
-                            style="cursor: pointer; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.4px;" id="btn-load">
-                            <i class="bi bi-cloud-arrow-up-fill me-1"></i>Upload GeoVideo
+                        <div class="px-2 py-2 border border bg-white text-secondary w-auto m-1 rounded" 
+                            style="cursor: pointer; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.4px;" id="btn-load">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> UPLOAD GEOVIDEO
                         </div>
                     </div>
                 </div>
@@ -350,7 +362,9 @@
     var vide_line;
     var coordinates = [];
     var current_video_pos_path;
+
     function init_video_events(){
+    
         var player = $('#geoplayer');
 
         
