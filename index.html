@@ -11,6 +11,8 @@
     <link  href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<script src="assets/bootstrap/js/bootstrap.bundle.min.js" ></script>
 	
+    <!-- Tabler icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
 
     <!-- Fontawesome 6.2.1 -->
     <link rel="stylesheet" href="assets/fontawesome/css/all.css">
@@ -32,6 +34,10 @@
     <link rel="stylesheet" href='https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css'>
     <link rel="stylesheet" href='https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css'>
     <script src='https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+
+    <!-- custom csss -->
+    <link rel="stylesheet" href='assets/css/style.css'>
 
     <!-- JQuery --> 
     <link rel="stylesheet" href="assets/js/jquery-ui/jquery-ui.css">
@@ -47,22 +53,18 @@
     <!-- Exif -->
     <script src="assets/js/exif.js"></script>
 
-    <style>
-        body {
-            font-family: "Inter", sans-serif;
-        }
-    </style>
+    
 
 </head>
 <body>
 
-    <div class="container-fluid p-0 m-0">
-        <div class="w-100 vh-100 bg-danger m-0 p-0">
-            <div class="d-flex flex-row p-0 m-0 vh-100">
-                <div class="w-50 vh-100 bg-dark mb-0 position-relative">
+    <div class="container-fluid vh-100 bg-info p-0 m-0">
+        <div class="w-100 h-100 bg-danger m-0 p-0">
+            <div class="d-flex flex-column flex-lg-row p-0 m-0 h-100">
+                <div class="flex-grow-1 bg-dark mb-0 position-relative">
                     
                     
-                    <video id="geoplayer" class="position-absolute start-0 top-0 vh-100 w-100" controls></video>
+                    <video id="geoplayer" class="position-absolute start-0 top-0 h-100 w-100" controls></video>
                     <div class="row m-0 position-absolute start-0 top-0 w-100" style="z-index: 1000;">
                         <div class="px-2 py-2 border border bg-white text-secondary w-auto m-1 rounded" 
                             style="cursor: pointer; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.4px;" id="btn-load">
@@ -70,11 +72,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="w-50 vh-100 bg-success p-0 m-0 position-relative" id="map-container">
-                    <div id="map" class="w-100 vh-100 m-0 p-0">
+                <div class="flex-grow-1 bg-success p-0 m-0 position-relative" id="map-container">
+                    <div id="map" class="position-absolute top-0 start-0 w-100 h-100">
     
                     </div>
-                    <div class="position-absolute top-0 start-0 m-2 bg-white" style="z-index: 1001; border-radius: 50%;">
+                    <div class="position-absolute top-0 start-0 m-2 bg-white d-none" style="z-index: 1001; border-radius: 50%;">
                         
                         <img src="assets/img/compass.png" alt=""  id="compass" 
                             style="height: 70px; width: 70px; object-fit: contain; "></img>
@@ -86,6 +88,50 @@
                         <label class="form-check-label" for="chk-follow">
                           Track Position
                         </label>
+                    </div>
+
+                    <div class="d-flex flex-row gap-3 bg-white p-3 py-2 mt-3 overflow-auto position-absolute top-0 start-50 translate-middle-x rounded video-analytics-wrapper" 
+                        style="z-index: 500;">
+                    
+                        <div class="video-analytics-items d-flex flex-row flex-nowrap gap-1">
+                            <i class="ti ti-clock-hour-2 text-success"></i>
+                            <div class="text-nowrap" style="font-weight: 500;">
+                                Video Time
+                                <div class="text-secondary small" id="txt-time">00:00</div>
+                            </div>
+                        </div>
+                        <div class="video-analytics-items d-flex flex-row flex-nowrap gap-1">
+                            <i class="ti ti-location text-success"></i>
+                            <div class="text-nowrap" style="font-weight: 500;">
+                                Location
+                                <div class="text-secondary small" id="txt-location">0, 0</div>
+                            </div>
+                        </div>
+
+                        <div class="video-analytics-items d-flex flex-row flex-nowrap gap-1">
+                            <i class="ti ti-location-up text-success"></i>
+                            <div class="text-nowrap" style="font-weight: 500;">
+                                Elevation
+                                <div class="text-secondary small" id="txt-elevation">0m</div>
+                            </div>
+                        </div>
+
+                        <div class="video-analytics-items d-flex flex-row flex-nowrap gap-1">
+                            <i class="ti ti-location-share text-success"></i>
+                            <div class="text-nowrap" style="font-weight: 500;">
+                                Slope
+                                <div class="text-secondary small" id="txt-slope">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="video-analytics-items d-flex flex-row flex-nowrap gap-1">
+                            <i class="ti ti-scan-position text-success"></i>
+                            <div class="text-nowrap" style="font-weight: 500;">
+                                Bearing
+                                <div class="text-secondary small" id="txt-bearing">0&deg;</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -131,21 +177,29 @@
     
     
     <script src="assets/js/global.js"></script>
+    <script src="assets/js/map.js"></script>
 
     
 <script>
     
+    const  analytics_wrapper = $('.analytics-wrapper');
+    const txt_location = $('#txt-location');
+    const txt_slope = $('#txt-slope');
+    const txt_elevation = $('#txt-elevation');
+    const txt_time = $('#txt-time');
+    const txt_bearing = $('#txt-bearing');
 
     $(window).ready(function(){
         init_map();
         // load_gps_info();
         init_video_events();
         
+        // disable right click
         document.addEventListener('contextmenu', event => event.preventDefault());
     });
 
 
-    function init_map(){
+    const init_map = () => {
         
         map = L.map('map', {
 
@@ -184,11 +238,27 @@
        
 
 
+
+        L.tileLayer.wms("https://prdp-ggu-geoserver.da.gov.ph/geoserver/ggu/wms", {
+                        layers: 'ggu:PH_DTM_5m',
+                        format: 'image/png',
+                        // cql_filter : `Reg_Name IN ('REGION V (BICOL REGION)', 'REGION IX (ZAMBOANGA PENINSULA)')`,
+                        transparent: true,
+                        version: '1.3.0',
+                        tiled: true,
+                        maxZoom : 21,
+                        // pane : 'layer',
+                        // styles : 'prov_label',
+                        // styles : '',
+                        // sld_body : mun_sld_body,
+                        // method : 'POST'
+
+                    });
     
     
     }
 
-    async function load_gps_info(){
+    const  load_gps_info = async () => {
         var url = base_url + 'assets/files/videos/PRDP_GEOVIDEO_07232020_111426 AM-720p.gps.info';
 
         var fetchResult;
@@ -238,6 +308,7 @@
                     map.removeLayer(videoPath);
                 }
                 video_path = L.polyline(coordinates, {weight: 5, color: '#00ff00'});
+                console.log(video_path);
                 video_path.addTo(map);
                 map.fitBounds(video_path.getBounds());
 
@@ -251,9 +322,13 @@
 
     }
 
-    function load_gps_from_file(file){
+    // read loaded GPS Info file
+    const load_gps_from_file = (file) => {
+
+        // file reader instance
         var reader = new FileReader();
 
+        // read file event
         reader.onload = function(){
             
             var gps = reader.result.split('\n');
@@ -269,6 +344,7 @@
             var coordinates_inverse = [];
                 video_time = {};
             var timeIndex = 0;
+
             for(i = 0; i < gps.length; i++){
 
                 var parts = gps[i].split(';');
@@ -330,10 +406,18 @@
                     map.removeLayer(video_pos);
                 }
                 video_path = L.polyline(coordinates, {weight: 5, color: '#00ff00'});
+                
                 current_video_pos_path = L.polyline([], {weight: 5, color: '#ff0000'});
                 // console.log(video_path.getLatLngs());
 
-                video_line        = turf.lineString(coordinates_inverse);
+                const video_line        = turf.lineString(coordinates_inverse);
+
+                const video_line_buffer = turf.buffer(video_line, 0.5) // get 1 km buffer for elevation calculation
+                const video_line_buffer_bbox = turf.bbox(video_line_buffer);
+
+
+                // console.log(video_line_buffer_bbox)
+                
                 video_path_length = turf.length(video_line);
                     // console.log(video_path_length);
                 
@@ -343,7 +427,36 @@
                 map.fitBounds(video_path.getBounds());
 
                 video_pos = L.marker(coordinates[0], {icon : icon}).addTo(map);
-                $('#geoplayer').trigger('play');
+
+
+                (async() => {
+
+                    await readElevation(video_time, video_line_buffer_bbox);
+
+                    const video_time_values = Object.values(video_time);
+                    if(video_time_values[0].elevation){
+                        video_time_values[0].slope_grade = 0;
+                        for(let i = 1; i < video_time_values.length; i++){
+
+                            const origin = video_time_values[i - 1];
+                            const destination = video_time_values[i];
+
+                            const pointA = {lat : origin.latLng[0], lon : origin.latLng[1], elevation : origin.elevation};
+                            const pointB = {lat : destination.latLng[0], lon : destination.latLng[1], elevation : destination.elevation};
+
+                            // console.log(pointA, pointB)
+                            const slope = getSlope(pointA, pointB);
+
+                            destination.slope = slope.slope;
+                            destination.slope_grade = slope.slope_grade;
+
+                        }
+                    }
+
+                })();
+
+
+                // $('#geoplayer').trigger('play');
             }
         }
 
@@ -386,7 +499,10 @@
             // console.log(this.duration);
             // console.log(map.getZoom());
             var current_video_pos = video_time[current_time];
+
             if(current_video_pos !== undefined){
+
+                // console.log(current_video_pos);
                 video_pos.setLatLng(current_video_pos.latLng);
                 current_video_pos_path.addLatLng(current_video_pos.latLng);
                 
@@ -396,6 +512,13 @@
                 // console.log(current_video_pos.bearing);
                 $('#logo').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
                 $('#compass').css({'transform' : 'rotate('+ current_video_pos.bearing +'deg)'});
+
+
+                txt_time.text(`${current_time}`);
+                if(current_video_pos.elevation) txt_elevation.text(`${current_video_pos.elevation.toFixed(1)}m`);
+                if(current_video_pos.slope_grade) txt_slope.text(`${current_video_pos.slope_grade.toFixed(1)}%`);
+                txt_location.text(`${current_video_pos.latLng[0].toFixed(3)}, ${current_video_pos.latLng[1].toFixed(2)}`);
+                txt_bearing.html(`${current_video_pos.bearing.toFixed(1)}&deg;`);
             }
         });
 
@@ -457,7 +580,7 @@
         });
         $(document).on('click', '#btn-load-video', function(e){
             var videoFiles = $('#videoFile').prop('files');
-            console.log(videoFiles);
+            // console.log(videoFiles);
             if(videoFiles.length <= 0){
                 alert('No Video File chosen');
                 return;
@@ -498,9 +621,12 @@
 
 
     var icon = L.divIcon({
-                        html : '<img src="assets/img/navigation.png" style="width: 24px; height: 24px; object-fit: contain;" id="logo"></img>',
+                        html : `<div class="d-flex justify-content-center align-items-center" style="width: 24px; height: 24px;">
+                                    <img src="assets/img/navigation.png"  class="w-100 h-100" 
+                                        style="object-fit: contain;" id="logo"></img>
+                                </div>`,
                         iconSize : [24, 24],
-                        // iconAnchor : [12, 24],
+                        iconAnchor : [12, 12],
                         // popupAnchor : [0, -raw_icon.height * 0.9],
                         className : 'map-marker'
                     });
