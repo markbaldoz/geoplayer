@@ -518,7 +518,7 @@
 
                 txt_time.text(`${current_time}`);
                 if(current_video_pos.elevation) txt_elevation.text(`${current_video_pos.elevation.toFixed(1)}m`);
-                if(current_video_pos.slope_grade) txt_slope.text(`${current_video_pos.slope_grade.toFixed(1)}%`);
+                if(current_video_pos.slope_grade) txt_slope.html(`${current_video_pos.slope.toFixed(1)}&deg;`);
                 txt_location.text(`${current_video_pos.latLng[0].toFixed(3)}, ${current_video_pos.latLng[1].toFixed(2)}`);
                 txt_bearing.html(`${current_video_pos.bearing.toFixed(1)}&deg;`);
             }
