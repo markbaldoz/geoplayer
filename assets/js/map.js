@@ -18,8 +18,8 @@ async function readElevation(videoTime, bbox) {
     wcsUrl.searchParams.set("service", "WCS");
     wcsUrl.searchParams.set("version", "2.0.1");
     wcsUrl.searchParams.set("request", "GetCoverage");
-    wcsUrl.searchParams.set("coverageId", "PH_DEM");
-    // wcsUrl.searchParams.set("coverageId", "PH_DTM_5m");
+    // wcsUrl.searchParams.set("coverageId", "PH_DEM");
+    wcsUrl.searchParams.set("coverageId", "PH_DTM_5m");
     wcsUrl.searchParams.set("format", "image/tiff");
 
     // Set bounding box to subset
