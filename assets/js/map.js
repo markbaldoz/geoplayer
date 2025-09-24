@@ -13,7 +13,8 @@ var icons = {
 async function readElevation(videoTime, bbox) {
 
 
-    const wcsUrl = new URL("https://prdp-ggu-geoserver.da.gov.ph/geoserver/ggu/wcs");
+    // const wcsUrl = new URL("https://prdp-ggu-geoserver.da.gov.ph/geoserver/ggu/wcs");
+    const wcsUrl = new URL("https://geomapping.da.gov.ph/geoserver/ggu/wcs");
 
     wcsUrl.searchParams.set("service", "WCS");
     wcsUrl.searchParams.set("version", "2.0.1");
